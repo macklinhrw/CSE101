@@ -1,3 +1,10 @@
 #include <stdio.h>
 
-int main() { printf("Hello World!\n"); }
+void test();
+
+int main() {
+  printf("Hello World!\n");
+  test();
+}
+
+void test() { printf("test\n"); }
