@@ -1,32 +1,75 @@
 #include <cairo/cairo.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-typedef struct {
-  int x;
-  int y;
+typedef struct
+{
+  double x;
+  double y;
 } Point;
 
-void printDoubleArray(double *arr) {
-  int size = sizeof(arr) / sizeof(arr[0]);
-  printf("size: %d", size);
-  for (int i = 0; i < size; ++i) {
-    printf("%f ", arr[i]);
+// void printDoubleArray(double *arr, int length)
+// {
+//   for (int i = 0; i < length; ++i)
+//   {
+//     printf("%f ", arr[i]);
+//   }
+//   printf("\n");
+// }
+
+// curve
+// inputs: Point A, Point B - The starting and ending points of the line
+// depth - The current depth of recursion
+// maxDepth - The maximum depth of recursion
+// cr: the cairo surface to draw on once the maxDepth has been reached
+void curve(Point A, Point B, int depth, int maxDepth, cairo_t *cr)
+{
+  // if depth is equal to the maximum recursive depth, then
+  // draw the points
+  if (depth == maxDepth)
+  {
+    // draw all the lines in the array using Cairo
+
+    cairo_set_source_rgb(cr, 1, 0, 0); // red
+    cairo_move_to(cr, A.x, A.y);       // top left corner
+    cairo_line_to(cr, B.x, B.y);       // middle of the image
+    // cairo_move_to(cr, 256, 0);
+    // cairo_line_to(cr, 0, 256);
+    cairo_set_line_width(cr, 1);
+    cairo_stroke(cr);
+    // cairo_close_path(cr);
+    printf("A is (%.2f, %.2f), B is (%.2f, %.2f)\n", A.x, A.y, B.x, B.y);
   }
-  printf("\n");
+  else // otherwise, call itself recursively till max depth is reached
+  {
+    double ePrimeX = B.x - A.x;
+    double ePrimeY = B.y - A.y;
+
+    double vX = ((ePrimeX + ePrimeY) / 2) + A.x;
+    double vY = ((-ePrimeX + ePrimeY) / 2) + A.y;
+
+    Point V;
+    V.x = vX;
+    V.y = vY;
+
+    // Recursive call
+    // two lines, from start point to new point,
+    curve(A, V, depth + 1, maxDepth, cr);
+    // from end point to new point
+    curve(V, B, depth + 1, maxDepth, cr);
+  }
 }
 
-double *curve() {
-  static double array[] = {0, 0};
-  return array;
-}
-
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
   cairo_surface_t *surface =
       cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 512, 512);
   cairo_t *cr = cairo_create(surface);
 
-  if (argc < 8) {
+  if (argc < 9)
+  {
     printf("Please include all arguments.\n");
     // arguments - width, height, ...
 
@@ -38,83 +81,32 @@ int main(int argc, char *argv[]) {
   int width = atoi(argv[2]);
   int height = atoi(argv[3]);
 
+  // Maximum depth
+  double depth = atoi(argv[4]); // needs to be positive number
+
   // starting point A
-  double Ax = atof(argv[4]);
-  double Ay = atof(argv[5]);
+  double Ax = atof(argv[5]);
+  double Ay = atof(argv[6]);
   Point A;
   A.x = Ax;
   A.y = Ay;
 
   // starting point B
-  double Bx = atof(argv[6]);
-  double By = atof(argv[7]);
+  double Bx = atof(argv[7]);
+  double By = atof(argv[8]);
   Point B;
   B.x = Bx;
   B.y = By;
   // End Params ====
 
-  printf("filename: %s\n", filename);
-  printf("width: %d\n", width);
-  printf("height: %d\n", height);
-
-  double *array = curve();
-  printDoubleArray(array);
-
-  return 0;
-
-  // process command line input per specification
-
-  // default is black background.  set background to white.
-  // set pen to black
-
-  // top left corner -- green X on black background
-  // default background is black
-
-  cairo_set_source_rgb(cr, 0, 1, 0); // green
-  cairo_move_to(cr, 0, 0);           // top left corner
-  cairo_line_to(cr, 256, 256);       // middle of the image
-  cairo_move_to(cr, 256, 0);
-  cairo_line_to(cr, 0, 256);
-  cairo_set_line_width(cr, 10.0);
-  cairo_stroke(cr);
-
-  // bottom left corner -- white box on blue background using
-  // coordinate specification
-
-  cairo_set_source_rgb(cr, 0, 0, 1); // blue
-  cairo_rectangle(cr, 0, 255, 255, 255);
+  cairo_set_source_rgb(cr, 1, 1, 1); // white
+  cairo_rectangle(cr, 0, 0, width, height);
   cairo_fill(cr);
 
-  cairo_move_to(cr, 0, 255);
-  cairo_line_to(cr, 255, 255);
-  cairo_line_to(cr, 255, 511);
-  cairo_line_to(cr, 0, 511);
-  cairo_close_path(cr);
+  curve(A, B, 0, depth, cr);
 
-  cairo_set_source_rgb(cr, 1, 1, 1); // white
-  cairo_set_line_width(cr, 8.0);
-  cairo_stroke(cr);
-
-  // bottom right corner -- red box on white background using
-  // relative line drawing
-
-  cairo_set_source_rgb(cr, 1, 1, 1); // white
-  cairo_rectangle(cr, 256, 256, 511, 511);
-  cairo_fill(cr);
-
-  cairo_move_to(cr, 256, 256);
-  cairo_rel_line_to(cr, 256, 0);
-  cairo_rel_line_to(cr, 0, 256);
-  cairo_rel_line_to(cr, -256, 0);
-  cairo_close_path(cr);
-
-  cairo_set_source_rgb(cr, 1, 0, 0); // red
-  cairo_set_line_width(cr, 5.5);
-  cairo_stroke(cr);
-
-  // send output to png file
   cairo_destroy(cr);
-  cairo_surface_write_to_png(surface, "test.png");
+  cairo_surface_write_to_png(surface, strcat(filename, ".png"));
   cairo_surface_destroy(surface);
   return 0;
 }
