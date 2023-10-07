@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Point struct with X and Y fields
 typedef struct
 {
   double x;
@@ -30,17 +31,14 @@ void curve(Point A, Point B, int depth, int maxDepth, cairo_t *cr)
   // draw the points
   if (depth == maxDepth)
   {
-    // draw all the lines in the array using Cairo
-
+    // draw all the lines using Cairo
     cairo_set_source_rgb(cr, 1, 0, 0); // red
     cairo_move_to(cr, A.x, A.y);       // top left corner
     cairo_line_to(cr, B.x, B.y);       // middle of the image
-    // cairo_move_to(cr, 256, 0);
-    // cairo_line_to(cr, 0, 256);
     cairo_set_line_width(cr, 1);
     cairo_stroke(cr);
-    // cairo_close_path(cr);
-    printf("A is (%.2f, %.2f), B is (%.2f, %.2f)\n", A.x, A.y, B.x, B.y);
+
+    // printf("A is (%.2f, %.2f), B is (%.2f, %.2f)\n", A.x, A.y, B.x, B.y);
   }
   else // otherwise, call itself recursively till max depth is reached
   {
@@ -64,15 +62,12 @@ void curve(Point A, Point B, int depth, int maxDepth, cairo_t *cr)
 
 int main(int argc, char *argv[])
 {
-  cairo_surface_t *surface =
-      cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 512, 512);
-  cairo_t *cr = cairo_create(surface);
 
+  // TODO: error checking on params?
   if (argc < 9)
   {
     printf("Please include all arguments.\n");
-    // arguments - width, height, ...
-
+    printf("Arguments - filename, width, height, depth, Ax, Ay, Bx, By (starting points A and B).\n");
     return -1;
   }
 
@@ -99,12 +94,19 @@ int main(int argc, char *argv[])
   B.y = By;
   // End Params ====
 
+  cairo_surface_t *surface =
+      cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+  cairo_t *cr = cairo_create(surface);
+
+  // Create the background
   cairo_set_source_rgb(cr, 1, 1, 1); // white
   cairo_rectangle(cr, 0, 0, width, height);
   cairo_fill(cr);
 
+  // Call the recursive curve function to draw the levy c curve
   curve(A, B, 0, depth, cr);
 
+  // finally, clean up and save the file
   cairo_destroy(cr);
   cairo_surface_write_to_png(surface, strcat(filename, ".png"));
   cairo_surface_destroy(surface);
