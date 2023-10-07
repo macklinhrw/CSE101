@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
   if (argc < 9)
   {
     printf("Please include all arguments.\n");
-    printf("Arguments - filename, width, height, depth, Ax, Ay, Bx, By (starting points A and B).\n");
+    printf("Arguments - filename, width, height, depth, Ax, Ay, Bx, By (starting point A and ending point B).\n");
     return -1;
   }
 
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
   A.x = Ax;
   A.y = Ay;
 
-  // starting point B
+  // ending point B
   double Bx = atof(argv[7]);
   double By = atof(argv[8]);
   Point B;
