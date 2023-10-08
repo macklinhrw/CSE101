@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX_FILENAME_LENGTH 100
+
 // Point struct with X and Y fields
 typedef struct
 {
@@ -63,32 +65,40 @@ void curve(Point A, Point B, int depth, int maxDepth, cairo_t *cr)
 int main(int argc, char *argv[])
 {
 
-  // TODO: error checking on params?
-  if (argc < 9)
-  {
-    printf("Please include all arguments.\n");
-    printf("Arguments - filename, width, height, depth, Ax, Ay, Bx, By (starting point A and ending point B).\n");
-    return -1;
-  }
+  // Checking all command line arguments are present
+  // if (argc < 9)
+  // {
+  //   printf("Please include all arguments.\n");
+  //   printf("Arguments - filename, width, height, depth, Ax, Ay, Bx, By (starting point A and ending point B).\n");
+  //   return -1;
+  // }
 
   // Start Params ====
-  char *filename = argv[1];
-  int width = atoi(argv[2]);
-  int height = atoi(argv[3]);
+  char filename[MAX_FILENAME_LENGTH]; // Output filename
+  int width, height;                  // Width and height of canvas
+  double depth;                       // Max recursion depth
+  double Ax, Ay;                      // Starting point A
+  double Bx, By;                      // Ending point B
+  scanf("%s %d %d %lf %lf %lf %lf %lf", filename, &width, &height, &depth, &Ax, &Ay, &Bx, &By);
+
+  // Command line arguments, my old implementation
+  // char *filename = argv[1];
+  // int width = atoi(argv[2]);
+  // int height = atoi(argv[3]);
 
   // Maximum depth
-  double depth = atoi(argv[4]); // needs to be positive number
+  // double depth = atoi(argv[4]); // needs to be positive number
 
   // starting point A
-  double Ax = atof(argv[5]);
-  double Ay = atof(argv[6]);
+  // double Ax = atof(argv[5]);
+  // double Ay = atof(argv[6]);
   Point A;
   A.x = Ax;
   A.y = Ay;
 
   // ending point B
-  double Bx = atof(argv[7]);
-  double By = atof(argv[8]);
+  // double Bx = atof(argv[7]);
+  // double By = atof(argv[8]);
   Point B;
   B.x = Bx;
   B.y = By;
