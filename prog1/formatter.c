@@ -3,16 +3,68 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Helper constants for allocating string length
+#define FILENAME_LEN 256
+#define MAX_LINE_LEN 1024
+
 void printString(void *str)
 {
   char *s = str;       // "casting" void * to char *
   printf("%s    ", s); // print string starting from s
 }
 
-// Formats the input List, L, by ammount amt.
-// then outputs a file with the formatted text.
+// Returns a filename string without the extension, as well
+// as in the correct format for the assignment.
+// The filename will need to be freed since we are using malloc.
+// @param filename The filename with extension
+// @param amt The line length
+// @param label The label signifying the type of justification
+char *createOutputFilename(char *filename, int amt, char *label)
+{
+  // strrchr finds the last occurence of a character in a string
+  const char *dot = strrchr(filename, '.');
+  if (!dot) // If no dot was found, return the input filename
+  {
+    return filename;
+  }
+
+  // Create a new string without the extension
+  int lengthWithoutExtension = dot - filename;
+  char baseFilename[lengthWithoutExtension + 1];
+
+  strncpy(baseFilename, filename, lengthWithoutExtension);
+  baseFilename[lengthWithoutExtension] = '\0';
+
+  // Create the output filename and return
+  char *outputFilename = (char *)malloc(sizeof(char) * (FILENAME_LEN));
+  // Needed to add one here since adding a '.' was cutting off the last digit?
+  snprintf(outputFilename, sizeof(outputFilename) + 1, "%s.%s%d", baseFilename, label, amt);
+
+  // Will need to remember to free the filename since we are using malloc above.
+  return outputFilename;
+}
+
+// Prints the left justified words list to a file
+// @param filename The filename to save to
+// @param L The list of words to format
+// @param amt The line length
 void formatLeft(ListPtr L, char *filename, int amt)
 {
+  if (L == NULL || L->head == NULL)
+  {
+    return; // Handle empty list
+  }
+
+  // Creating the output file name
+  char *outputFilename = createOutputFilename(filename, amt, "L");
+
+  FILE *file = fopen(outputFilename, "w");
+  if (!file)
+  {
+    perror("Error opening file");
+    return;
+  }
+
   // output file name =  `filename`.L`amt`
   NodeObj *cur = L->head;
   NodeObj *next = cur->next;
@@ -22,7 +74,7 @@ void formatLeft(ListPtr L, char *filename, int amt)
   {
     if (next == NULL)
     {
-      printf("%s ", cur->data);
+      fprintf(file, "%s ", cur->data);
       break;
     }
 
@@ -31,59 +83,66 @@ void formatLeft(ListPtr L, char *filename, int amt)
     if (nextLength > amt)
     {
       curLength = 0;
-      printf("%s\n", cur->data);
+      fprintf(file, "%s\n", cur->data);
     }
     else
     {
-      printf("%s ", cur->data);
+      fprintf(file, "%s ", cur->data);
     }
 
     cur = next;
     next = cur->next;
   }
 
-  printf("\n");
+  free(outputFilename);
 }
 
-// Formats the input List, L, by ammount amt.
-// then outputs a file with the formatted text.
+// Prints the right justified words list to a file
+// @param filename The filename to save to
+// @param L The list of words to format
+// @param amt The line length
 void formatRight(ListPtr L, char *filename, int amt)
 {
 
   if (L == NULL || L->head == NULL)
   {
-    return; // Handle empty list scenario
+    return; // Handle empty list
   }
 
-  // output file name =  `filename`.L`amt`
-  // NodeObj *next = cur->next;
+  // Creating the output file name
+  char *outputFilename = createOutputFilename(filename, amt, "R");
 
-  // char line[amt];
-  // line[0] = '\0';
-
-  // int curLength = 0;
+  FILE *file = fopen(outputFilename, "w");
+  if (!file)
+  {
+    perror("Error opening file");
+    return;
+  }
 
   NodeObj *current = L->head;
-  char line[1024] = "";
+  char line[MAX_LINE_LEN] = "";
   int lineLength = 0;
   while (current != NULL)
   {
     char *word = current->data;
     int wordLength = strlen(word);
 
+    // Check if adding the new word exceeds the limit
     if (lineLength + wordLength + (lineLength > 0 ? 1 : 0) > amt)
     {
-      int padding = amt - lineLength;
+      // Right justify and print the current line because the new word doesn't fit
+      fprintf(file, "%*s\n", amt, line); // Right-justify and print
 
-      printf("%*s\n", amt, line); // Right-justify and print
-
+      // Start a new line with the current word
       strcpy(line, word);
       lineLength = wordLength;
     }
     else
     {
+      // Add the current word to the line
       if (lineLength > 0)
       {
+        // Add a space before the word if it's not the start of the line
         strcat(line, " ");
         lineLength++;
       }
@@ -92,65 +151,88 @@ void formatRight(ListPtr L, char *filename, int amt)
     }
 
     current = current->next;
-
-    // if (next == NULL)
-    // {
-    //   printf("%s\n", cur->data);
-    //   break;
-    // }
-
-    // curLength += strlen(cur->data) + 1; // add one to account for space
-    // int nextLength = curLength + strlen(next->data) + 1;
-    // if (nextLength > amt)
-    // {
-    //   int numWhitespaces = amt - curLength;
-
-    //   char whitespaces[numWhitespaces];
-    //   whitespaces[0] = '\0';
-
-    //   for (int count = 0; count < numWhitespaces; count++)
-    //   {
-    //     char whitespace[] = " ";
-    //     strcat(whitespaces, whitespace);
-    //   }
-
-    //   char finalLine[amt];
-    //   finalLine[0] = '\0';
-
-    //   strcat(finalLine, whitespaces);
-    //   strcat(finalLine, line);
-
-    //   printf("%s\n", finalLine);
-    //   line[0] = '\0';
-
-    //   curLength = 0;
-    // }
-    // else
-    // {
-    //   char *word = cur->data;
-    //   char whitespace[] = " ";
-    //   strcat(word, whitespace);
-    //   strcat(line, word);
-    // }
-
-    // cur = next;
-    // next = cur->next;
   }
 
   // Print the last line if it's not empty
   if (lineLength > 0)
   {
-    printf("%*s\n", amt, line);
+    fprintf(file, "%*s", amt, line);
   }
 
-  printf("\n");
+  free(outputFilename);
+}
+
+// Prints the center justified words list to a file
+// @param filename The filename to save to
+// @param L The list of words to format
+// @param amt The line length
+void formatCenter(ListPtr L, char *filename, int amt)
+{
+
+  if (L == NULL || L->head == NULL)
+  {
+    return; // Handle empty list
+  }
+
+  // Creating the output file name
+  char *outputFilename = createOutputFilename(filename, amt, "C");
+
+  FILE *file = fopen(outputFilename, "w");
+  if (!file)
+  {
+    perror("Error opening file");
+    return;
+  }
+
+  NodeObj *current = L->head;
+  char line[MAX_LINE_LEN] = "";
+  int lineLength = 0;
+  while (current != NULL)
+  {
+    char *word = current->data;
+    int wordLength = strlen(word);
+
+    // Check if adding the new word exceeds the limit
+    if (lineLength + wordLength + (lineLength > 0 ? 1 : 0) > amt)
+    {
+      // Center justify and print the current line because the new word doesn't fit
+      int padding = (amt - lineLength) / 2;
+      fprintf(file, "%*s%s\n", padding, " ", line);
+
+      // Start a new line with the current word
+      strcpy(line, word);
+      lineLength = wordLength;
+    }
+    else
+    {
+      // Add the current word to the line
+      if (lineLength > 0)
+      {
+        // Add a space before the word if it's not the start of the line
+        strcat(line, " ");
+        lineLength++;
+      }
+      strcat(line, word);
+      lineLength += wordLength;
+    }
+
+    current = current->next;
+  }
+
+  // Print the last line if it's not empty
+  if (lineLength > 0)
+  {
+    int padding = (amt - lineLength) / 2;
+    fprintf(file, "%*s%s", padding, " ", line);
+  }
+
+  free(outputFilename);
 }
 
 int main(int argc, char **argv)
 {
 
-  // The first command is the input file name; at least one line of text which
-  // is this
+  // The first command is the input file name; at least one line of text
   char *fileName;
   scanf("%s", fileName);
 
@@ -169,19 +251,14 @@ int main(int argc, char **argv)
   char word[256];
   while (fscanf(file, "%255s", word) == 1)
   {
-    printf("Word: %s\n", word);
-
     char *tempWord = (char *)malloc(sizeof(char) * 256);
     strcpy(tempWord, word);
     appendList(L, tempWord);
   }
 
-  printList(L);
-  printf("\n\n");
-  formatRight(L, "test", 50);
-
   fclose(file);
 
+  // CLI command loop
   while (true)
   {
     char *command;
@@ -192,7 +269,7 @@ int main(int argc, char **argv)
     char formatCommand[] = "format";
     char formatLarg[] = "L";
     char formatRarg[] = "R";
-    // char formatCarg[] = "C";
+    char formatCarg[] = "C";
 
     scanf("%s", command);
 
@@ -209,10 +286,17 @@ int main(int argc, char **argv)
       if (!strcmp(arg, formatLarg)) // i.e., format L
       {
         scanf("%d", &formatAmt);
+        formatLeft(L, fileName, formatAmt);
       }
       else if (!strcmp(arg, formatRarg)) // i.e., format R
       {
         scanf("%d", &formatAmt);
+        formatRight(L, fileName, formatAmt);
+      }
+      else if (!strcmp(arg, formatCarg)) // i.e., format C
+      {
+        scanf("%d", &formatAmt);
+        formatCenter(L, fileName, formatAmt);
       }
       else // invalid argument, print error
       {
@@ -225,12 +309,6 @@ int main(int argc, char **argv)
     }
   }
 
+  // Free the memory for the list
   destroyList(&L);
-
-  // read input and create a list of "words"
-
-  // keep asking for user command to process
-  // Note:  you must use your List ADT functions to process format commands
-
-  // be sure to release memory
 }
